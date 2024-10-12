@@ -8,8 +8,13 @@ Passo 3: Abra o Postman e crie uma nova requisição.
 Defina o método da requisição como POST.
 No campo de URL, insira http://localhost:4000/gerar-boleto.
 Vá até a aba "Body", selecione raw e depois JSON.
-No corpo da requisição, insira o seguinte JSON (ajustando o alvaraId conforme o que está disponível no seu sistema):{
+No corpo da requisição, insira o seguinte JSON (ajustando o alvaraId conforme o que está disponível no seu sistema):
+{
   "alvaraId": 1
+}
+ou
+{
+  "alvaraId": 2
 }
 Clique em Send para enviar a requisição e verificar a resposta.
 Resposta esperada: {
@@ -27,19 +32,29 @@ Passo 4: Simular o Pagamento via Pix: Agora que você tem o código de barras do
 No Postman, configure uma nova requisição:
 Método: POST
 URL: http://localhost:4000/pagar-pix
-Corpo da requisição (JSON): {
+Corpo da requisição (JSON): 
+
+{
   "codigoBarras": "1234.56789.12345-1"
 }
+
 Se o pagamento for bem-sucedido, você deve receber uma mensagem confirmando o pagamento.
 
 Passo 5: Gerar o PDF do Alvará: Após o pagamento ser confirmado, você pode gerar o PDF do alvará solicitado. Para isso, envie uma requisição POST para o endpoint /gerar-pdf, passando o ID do alvará que você selecionou anteriormente.
 
-No Postman, configure outra requisição:
-Método: POST
-URL: http://localhost:4000/gerar-pdf
-Corpo da requisição (JSON): {
+No Postman, configure outra requisição: Método: POST URL: http://localhost:4000/gerar-pdf
+Corpo da requisição (JSON): 
+
+{
   "alvaraId": 1
 }
+
+ou
+
+{
+  "alvaraId": 2
+}
+
 Isso irá gerar o PDF do alvará, e o PDF será retornado como resposta, permitindo que você baixe o documento.
 
 Passo 6: Verificação Final:
