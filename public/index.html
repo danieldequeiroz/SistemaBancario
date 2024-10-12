@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Alvará</title>
+</head>
+<body>
+    <h1>Sistema de Alvará</h1>
+
+    <div id="alvaras-container">
+        <h2>Escolha o Alvará:</h2>
+        <select id="alvaraSelect"></select>
+        <button id="gerarBoletoBtn">Gerar Boleto</button>
+    </div>
+
+    <div id="boleto-container" style="display:none;">
+        <h2>Boleto Gerado:</h2>
+        <p id="boletoValor"></p>
+        <p id="boletoCodigo"></p>
+        <button id="pagarPixBtn">Pagar com Pix</button>
+    </div>
+
+    <div id="pdf-container" style="display:none;">
+        <h2>PDF do Alvará</h2>
+        <button id="baixarPdfBtn">Baixar PDF</button>
+    </div>
+
+    <script>
+        // Função para carregar alvarás
+        function carregarAlvaras() {
+            fetch('/alvaras')
+                .then(res => res.json())
+                .then(data => {
+                    const alvaraSelect = document.getElementById('alvaraSelect');
+                    data.forEach(alvara => {
+                        const option = document.createElement('option');
+                        option.value = alvara.id;
+                        option.textContent = alvara.nome;
+                        alvaraSelect.appendChild(option);
+                    });
+                });
+        }
+
+        document.getElementById('gerarBoletoBtn').addEventListener('click', () => {
+            const alvaraId = document.getElementById('alvaraSelect').value;
+            fetch('/gerar-boleto', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ alvaraId }),
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('boletoValor').textContent = `Valor: R$${data.boleto.valor}`;
+                document.getElementById('boletoCodigo').textContent = `Código de Barras: ${data.boleto.codigoBarras}`;
+                document.getElementById('boleto-container').style.display = 'block';
+            });
+        });
+
+        document.getElementById('pagarPixBtn').addEventListener('click', () => {
+            const codigoBarras = document.getElementById('boletoCodigo').textContent.split(': ')[1];
+            fetch('/pagar-pix', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ codigoBarras }),
+            })
+            .then(res => res.json())
+            .then(() => {
+                document.getElementById('pdf-container').style.display = 'block';
+            });
+        });
+
+        document.getElementById('baixarPdfBtn').addEventListener('click', () => {
+            const alvaraId = document.getElementById('alvaraSelect').value;
+            fetch('/gerar-pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ alvaraId }),
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'alvara.pdf';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            });
+        });
+
+        carregarAlvaras();
+    </script>
+</body>
+</html>
