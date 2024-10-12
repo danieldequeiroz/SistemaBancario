@@ -1,6 +1,6 @@
 # Sistema Bancario
 
-Passo 1:  depois de clonar o repositório instale npm install express body-parser html-pdf
+#Passo 1:#  depois de clonar o repositório instale npm install express body-parser html-pdf
 
 Passo 2: Senão tiver o Postman instale: Você pode baixá-lo em https://www.postman.com/downloads/.
 
