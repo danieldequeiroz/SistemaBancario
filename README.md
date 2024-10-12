@@ -20,6 +20,8 @@ Resposta esperada: {
     "vencimento": "10/10/2024"
   }
 }
+
+
 Passo 4: Simular o Pagamento via Pix: Agora que você tem o código de barras do boleto, pode simular o pagamento via Pix. Para isso, envie uma requisição POST para o endpoint /pagar-pix com o código de barras gerado.
 
 No Postman, configure uma nova requisição:
