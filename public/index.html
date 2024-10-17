@@ -4,8 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Alvará</title>
+    <style>
+        body {
+            background-color: black; /* Define o fundo da página como preto */
+            color: white; /* Define o texto como branco */
+            text-align: center; /* Centraliza o texto abaixo da imagem */
+            margin: 0; /* Remove margens padrão */
+        }
+
+        .header {
+            display: flex; /* Alinha a imagem e o texto lado a lado */
+            align-items: center; /* Alinha verticalmente ao centro */
+            justify-content: center; /* Centraliza o conjunto no topo */
+            padding: 20px; /* Espaçamento ao redor do cabeçalho */
+            gap: 10px; /* Espaçamento entre a imagem e o texto */
+        }
+
+        .header img {
+            width: 100px; /* Ajusta a largura da imagem */
+        }
+
+        .header h1 {
+            font-size: 24px; /* Ajusta o tamanho do texto */
+            margin: 0; /* Remove a margem padrão do h1 */
+        }
+    </style>
 </head>
 <body>
+    <div class="header">
+        <img src="logoJP.png" alt="Brasão de João Pessoa" />
+        <h1>Prefeitura de João Pessoa</h1>
+    </div>
     <h1>Sistema de Alvará</h1>
 
     <div id="alvaras-container">
