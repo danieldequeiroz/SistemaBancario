@@ -3,15 +3,20 @@
     "version": "1.0.0",
     "description": "Um sistema bancário com geração de boletos, pagamentos via Pix e geração de PDFs de alvarás",
     "main": "servidor.js",
+    "type": "module", 
+
     "scripts": {
-      "start": "node servidor.js"
+        "start": "node servidor.js"
     },
     "dependencies": {
-      "express": "^4.18.2",
-      "body-parser": "^1.19.0",
-      "html-pdf": "^3.0.1"
+        "@mercadopago/sdk-js": "^0.0.3",
+        "body-parser": "^1.20.3",
+        "express": "^4.21.1",
+        "helmet": "^8.0.0",
+        "html-pdf": "^3.0.1",
+        "mercadopago": "^2.0.15",
+        "qrcode": "^1.5.4"
     },
     "author": "Daniel de Queiroz Cavalcanti",
     "license": "MIT"
-  }
-  
+}
