@@ -3,30 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
     <title>Sistema de Alvará</title>
     <style>
         body {
-            background-color: black; /* Define o fundo da página como preto */
-            color: white; /* Define o texto como branco */
-            text-align: center; /* Centraliza o texto abaixo da imagem */
-            margin: 0; /* Remove margens padrão */
+            background-color: black;
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 20px; 
         }
-
+        #qrCode {
+            width: 150px; /* Ajuste o tamanho conforme necessário */
+            height: auto; /* Mantém a proporção da imagem */
+            display: block; /* Para que a margem funcione */
+            margin: 20px auto; /* Centraliza a imagem */
+        }
         .header {
-            display: flex; /* Alinha a imagem e o texto lado a lado */
-            align-items: center; /* Alinha verticalmente ao centro */
-            justify-content: center; /* Centraliza o conjunto no topo */
-            padding: 20px; /* Espaçamento ao redor do cabeçalho */
-            gap: 10px; /* Espaçamento entre a imagem e o texto */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            gap: 10px;
+            margin-bottom: 20px;
         }
-
         .header img {
-            width: 100px; /* Ajusta a largura da imagem */
+            width: 100px;
         }
-
         .header h1 {
-            font-size: 24px; /* Ajusta o tamanho do texto */
-            margin: 0; /* Remove a margem padrão do h1 */
+            font-size: 24px;
+            margin: 0;
+        }
+        form {
+            margin-bottom: 20px; /* Espaço abaixo do formulário */
+        }
+        /* Alinhamento à esquerda para rótulos e à direita para campos */
+        form div {
+            display: flex; /* Usar flexbox */
+            justify-content: flex-start; /* Alinha à esquerda */
+            margin-bottom: 15px; /* Espaço abaixo de cada div do formulário */
+        }
+        form label {
+            flex: 1; /* Permite que o rótulo ocupe 1 parte do espaço */
+            text-align: left; /* Alinha o texto à esquerda */
+            margin-right: 10px; /* Espaço entre o rótulo e o campo */
+        }
+        form input,
+        form select {
+            flex: 2; /* Permite que o campo ocupe 2 partes do espaço */
+            padding: 5px; /* Adiciona um pouco de preenchimento interno */
+        }
+        #statusPagamento {
+            margin-top: 20px;
+            font-size: 18px;
+            color: yellow; /* Cor para destacar o status */
         }
     </style>
 </head>
@@ -37,94 +67,126 @@
     </div>
     <h1>Sistema de Alvará</h1>
 
-    <div id="alvaras-container">
-        <h2>Escolha o Alvará:</h2>
-        <select id="alvaraSelect"></select>
-        <button id="gerarBoletoBtn">Gerar Boleto</button>
-    </div>
+    <form id="form-checkout">
+        <div>
+            <label for="alvaraSelect">Escolha o Alvará:</label>
+            <select id="alvaraSelect" required>
+                <option value="" disabled selected>Selecione um Alvará</option>
+                <!-- As opções serão carregadas aqui -->
+            </select>
+        </div>
+        <div>
+            <label for="payerFirstName">Nome</label>
+            <input id="form-checkout__payerFirstName" name="payerFirstName" type="text" required placeholder="Insira seu nome">
+        </div>
+        <div>
+            <label for="payerLastName">Sobrenome</label>
+            <input id="form-checkout__payerLastName" name="payerLastName" type="text" required placeholder="Insira seu sobrenome">
+        </div>
+        <div>
+            <label for="email">E-mail</label>
+            <input id="form-checkout__email" name="email" type="email" required placeholder="Insira seu e-mail">
+        </div>
+        <div>
+            <label for="identificationType">Tipo de documento</label>
+            <select id="form-checkout__identificationType" name="identificationType" required>
+                <option value="" disabled selected>Selecione um tipo de documento</option>
+                <option value="CPF">CPF</option>
+                <option value="CNPJ">CNPJ</option>
+                <!-- Adicione outros tipos de documentos conforme necessário -->
+            </select>
+        </div>
+        <div>
+            <label for="identificationNumber">Número do documento</label>
+            <input id="form-checkout__identificationNumber" name="identificationNumber" type="text" required placeholder="Insira o número do documento">
+        </div>
+        <button id="gerarPixBtn">Gerar Chave Pix</button>
+    </form>
 
-    <div id="boleto-container" style="display:none;">
-        <h2>Boleto Gerado:</h2>
-        <p id="boletoValor"></p>
-        <p id="boletoCodigo"></p>
-        <button id="pagarPixBtn">Pagar com Pix</button>
+    <div id="pix-container" style="display:none;">
+        <p id="pixValor"></p>
+        <p id="pixChave"></p>
+        <img id="qrCode" style="display:none;" alt="QR Code" />
+        <button id="copiar">Copiar Chave Pix</button>
+        <p id="statusPagamento"></p> <!-- Adicionei aqui o elemento para exibir o status -->
     </div>
-
-    <div id="pdf-container" style="display:none;">
-        <h2>PDF do Alvará</h2>
-        <button id="baixarPdfBtn">Baixar PDF</button>
-    </div>
+    
 
     <script>
-        // Função para carregar alvarás
-        function carregarAlvaras() {
-            fetch('/alvaras')
-                .then(res => res.json())
-                .then(data => {
-                    const alvaraSelect = document.getElementById('alvaraSelect');
-                    data.forEach(alvara => {
-                        const option = document.createElement('option');
-                        option.value = alvara.id;
-                        option.textContent = alvara.nome;
-                        alvaraSelect.appendChild(option);
-                    });
-                });
-        }
+        const mp = new MercadoPago('APP_USR-3829660347869859-102309-9b6e68d21c73ba10440cce5d48bb60d1-430206286', {
+            locale: 'pt-BR'
+        });
+    </script>
 
-        document.getElementById('gerarBoletoBtn').addEventListener('click', () => {
-            const alvaraId = document.getElementById('alvaraSelect').value;
-            fetch('/gerar-boleto', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ alvaraId }),
-            })
+    <script>
+       document.getElementById('gerarPixBtn').addEventListener('click', (event) => {
+        event.preventDefault(); // Evita o envio do formulário
+        const alvaraId = parseInt(document.getElementById('alvaraSelect').value);
+        const email = document.getElementById('form-checkout__email').value;
+        const identificationType = document.getElementById('form-checkout__identificationType').value;
+        const identificationNumber = document.getElementById('form-checkout__identificationNumber').value;
+
+        fetch('/gerar-pix', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ alvaraId, email, identificationType, identificationNumber }),
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                console.error(data.error);
+                alert(`Erro: ${data.error}`);
+                return;
+            }
+            console.log('QR Code URL:', data.qrCode);
+            document.getElementById('pixValor').textContent = `Valor: R$${data.valor}`;
+            document.getElementById('pixChave').textContent = `Chave Pix: ${data.init_point}`;
+            document.getElementById('qrCode').src = `data:image/jpeg;base64,${data.qrCode}`;
+            document.getElementById('qrCode').style.display = 'block';
+            document.getElementById('pix-container').style.display = 'block';
+            document.getElementById('copiar').value = data.init_point;
+
+            // Verificar o status do pagamento após gerar a chave Pix
+          //  verificarStatusPagamento(data.paymentId);
+        })
+        .catch(error => {
+            console.error('Erro ao gerar chave Pix:', error);
+            alert('Erro ao gerar chave Pix. Tente novamente.');
+        });
+    });
+
+   
+
+        
+    
+
+    // Carregar alvarás
+    function carregarAlvaras() {
+        fetch('/alvaras')
             .then(res => res.json())
             .then(data => {
-                document.getElementById('boletoValor').textContent = `Valor: R$${data.boleto.valor}`;
-                document.getElementById('boletoCodigo').textContent = `Código de Barras: ${data.boleto.codigoBarras}`;
-                document.getElementById('boleto-container').style.display = 'block';
+                const alvaraSelect = document.getElementById('alvaraSelect');
+                data.forEach(alvara => {
+                    const option = document.createElement('option');
+                    option.value = alvara.id; // O value deve ser o ID do alvará
+                    option.textContent = alvara.nome;
+                    alvaraSelect.appendChild(option);
+                });
             });
-        });
+    }
 
-        document.getElementById('pagarPixBtn').addEventListener('click', () => {
-            const codigoBarras = document.getElementById('boletoCodigo').textContent.split(': ')[1];
-            fetch('/pagar-pix', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ codigoBarras }),
-            })
-            .then(res => res.json())
-            .then(() => {
-                document.getElementById('pdf-container').style.display = 'block';
-            });
-        });
+    carregarAlvaras();
 
-        document.getElementById('baixarPdfBtn').addEventListener('click', () => {
-            const alvaraId = document.getElementById('alvaraSelect').value;
-            fetch('/gerar-pdf', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ alvaraId }),
-            })
-            .then(response => response.blob())
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'alvara.pdf';
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-            });
+    document.getElementById('copiar').addEventListener('click', () => {
+        const chavePix = document.getElementById('pixChave').textContent; // Obtém o texto da chave Pix
+        navigator.clipboard.writeText(chavePix).then(() => {
+            alert('Chave Pix copiada: ' + chavePix); // Alerta ao usuário
+        }).catch(err => {
+            console.error('Erro ao copiar: ', err);
         });
-
-        carregarAlvaras();
+    });
     </script>
 </body>
 </html>
