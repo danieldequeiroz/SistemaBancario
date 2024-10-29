@@ -58,6 +58,11 @@
             font-size: 18px;
             color: yellow; /* Cor para destacar o status */
         }
+        #contador {
+            font-size: 24px;
+            color: red; /* Cor para destacar o contador */
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -66,6 +71,9 @@
         <h1>Prefeitura de João Pessoa</h1>
     </div>
     <h1>Sistema de Alvará</h1>
+    
+    <p id="statusPagamento" style="display:none;">Status de pagamento: Pendente</p> <!-- Status inicial -->
+    <p id="contador" style="display:none;">5:00</p> <!-- Contador inicial -->
 
     <form id="form-checkout">
         <div>
@@ -91,7 +99,7 @@
             <label for="identificationType">Tipo de documento</label>
             <select id="form-checkout__identificationType" name="identificationType" required>
                 <option value="" disabled selected>Selecione um tipo de documento</option>
-                <option value="CPF">CPF</option>
+                <option value="CPF">CPF</option >
                 <option value="CNPJ">CNPJ</option>
                 <!-- Adicione outros tipos de documentos conforme necessário -->
             </select>
@@ -108,7 +116,6 @@
         <img id="qrCode" style="display:none;" alt="QR Code" />
         <p id="pixChave"></p>
         <button id="copiar">Copiar Chave Pix</button>
-        <p id="statusPagamento">Status de pagamento: Pendente</p>
     </div>
 
     <script>
@@ -118,6 +125,11 @@
     </script>
 
     <script>
+        let paymentId;
+        let timeoutId;
+        let contadorId;
+        let segundos = 300; // 5 minutos em segundos
+
         document.getElementById('gerarPixBtn').addEventListener('click', (event) => {
             event.preventDefault(); // Evita o envio do formulário
             const alvaraId = parseInt(document.getElementById('alvaraSelect').value);
@@ -147,14 +159,38 @@
                 document.getElementById('pix-container').style.display = 'block';
                 document.getElementById('copiar').value = data.init_point;
 
+                paymentId = data.paymentId;
+                timeoutId = setTimeout(cancelarPagamento, 300000); // Inicia o temporizador de 5 minutos
+                contadorId = setInterval(atualizarContador, 1000); // Inicia o contador de 5 minutos
+                document.getElementById('contador').style.display = 'block'; // Exibe o contador
+
                 // Verificar o status do pagamento após gerar a chave Pix
-                verificarStatusPagamento(data.paymentId);
+                verificarStatusPagamento(paymentId);
             })
             .catch(error => {
                 console.error('Erro ao gerar chave Pix:', error);
                 alert('Erro ao gerar chave Pix. Tente novamente.');
             });
         });
+
+        function cancelarPagamento() {
+            fetch(`/cancelar-pagamento/${paymentId}`)
+                .then(res => res.json())
+                .then(data => {
+                    console.log('Pagamento cancelado:', data);
+                    document.getElementById('statusPagamento').style.display = 'block';
+                    document.getElementById('statusPagamento').textContent = 'Status: Pagamento cancelado.';
+                    document.getElementById('form-checkout').style.display = 'none';
+                    document.getElementById('pixValor').style.display = 'none';
+                    document.getElementById('qrCode').style.display = 'none';
+                    document.getElementById('pixChave').style.display = 'none';
+                    document.getElementById('copiar').style.display = 'none';
+                    document.getElementById('contador').style.display = 'none'; // Oculta o contador
+                })
+                .catch(error => {
+                    console.error('Erro ao cancelar pagamento:', error);
+                });
+        }
 
         function verificarStatusPagamento(paymentId) {
             const intervalId = setInterval(() => {
@@ -163,25 +199,52 @@
                     .then(data => {
                         console.log('Status do pagamento:', data.status);
                         if (data.status === 'approved') {
+                            document.getElementById('statusPagamento').style.display = 'block';
                             document.getElementById('statusPagamento').textContent = 'Status: Pagamento Aprovado!';
-                            document.getElementById('pixValor').style.display = 'none';
+                            document.getElementById('form-checkout').style.display = 'none';
+                            document.getElementById ('pixValor').style.display = 'none';
                             document.getElementById('qrCode').style.display = 'none';
                             document.getElementById('pixChave').style.display = 'none';
                             document.getElementById('copiar').style.display = 'none';
+                            document.getElementById('pix-container').style.display = 'none'; // Oculta o container do Pix
+                            document.getElementById('contador').style.display = 'none'; // Oculta o contador
                             clearInterval(intervalId); // Interrompe a verificação do status do pagamento
+                            clearTimeout(timeoutId); // Interrompe o temporizador de 5 minutos
+                            clearInterval(contadorId); // Interrompe o contador
                         } else if (data.status === 'pending') {
-                            document.getElementById('statusPagamento').textContent = 'Pagamento pendente...';
+                            document.getElementById('statusPagamento').style.display = 'block';
+                            document.getElementById('statusPagamento').textContent = 'Status: Pagamento Pendente...';
                             console.log('Pagamento ainda pendente...');
                         } else {
-                            document.getElementById('statusPagamento').textContent = 'Pagamento não aprovado.';
+                            document.getElementById('statusPagamento').style.display = 'block';
+                            document.getElementById('statusPagamento').textContent = 'Status: Pagamento não aprovado.';
                             clearInterval(intervalId); // Interrompe a verificação se o pagamento não for aprovado
+                            clearTimeout(timeoutId); // Interrompe o temporizador de 5 minutos
+                            clearInterval(contadorId); // Interrompe o contador
                         }
                     })
                     .catch(error => {
                         console.error('Erro ao verificar o pagamento:', error);
                         clearInterval(intervalId); // Interrompe a verificação em caso de erro
+                        clearTimeout(timeoutId); // Interrompe o temporizador de 5 minutos
+                        clearInterval(contadorId); // Interrompe o contador
                     });
             }, 5000); // Verifica o status do pagamento a cada 5 segundos
+        }
+
+        function atualizarContador() {
+            const contador = document.getElementById('contador');
+            let minutos = Math.floor(segundos / 60);
+            let segundosRestantes = segundos % 60;
+
+            contador.textContent = `${minutos.toString().padStart(2, '0')}:${segundosRestantes.toString().padStart(2, '0')}`;
+
+            segundos--;
+
+            if (segundos < 0) {
+                cancelarPagamento(); // Cancela o pagamento se o contador chegar a 0
+                clearInterval(contadorId); // Interrompe o contador
+            }
         }
 
         // Carregar alvarás
