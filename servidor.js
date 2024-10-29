@@ -108,7 +108,31 @@ if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
         }
     });
 
-   
+    // Novo endpoint para verificar o status do pagamento
+    app.get('/verificar-pagamento/:paymentId', async (req, res) => {
+        const paymentId = req.params.paymentId;
+
+        if (!paymentId) {
+            return res.status(400).json({ error: 'O ID do pagamento é obrigatório.' });
+        }
+
+        try {
+            const paymentStatusResponse = await payment.get({ id: paymentId });
+            console.log('Resposta do status do pagamento:', paymentStatusResponse);
+
+            if (!paymentStatusResponse || paymentStatusResponse.api_response.status !== 200) {
+                throw new Error('Resposta da API é indefinida ou inválida');
+            }
+
+            res.json({
+                mensagem: 'Status do pagamento:',
+                status: paymentStatusResponse.status,
+            });
+        } catch (error) {
+            console.error('Erro ao verificar o status do pagamento:', error.response ? error.response.body : error);
+            res.status(500).json({ error: error.response ? error.response.body : 'Erro ao verificar o status do pagamento' });
+        }
+    });
 
     // Novo endpoint para capturar pagamentos
     app.post('/capturar-pagamento', async (req, res) => {
