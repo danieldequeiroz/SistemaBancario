@@ -163,9 +163,11 @@
                     .then(data => {
                         console.log('Status do pagamento:', data.status);
                         if (data.status === 'approved') {
-                            document.getElementById('statusPagamento').textContent = 'Pagamento aprovado!';
+                            document.getElementById('statusPagamento').textContent = 'Status: Pagamento Aprovado!';
+                            document.getElementById('pixValor').style.display = 'none';
                             document.getElementById('qrCode').style.display = 'none';
                             document.getElementById('pixChave').style.display = 'none';
+                            document.getElementById('copiar').style.display = 'none';
                             clearInterval(intervalId); // Interrompe a verificação do status do pagamento
                         } else if (data.status === 'pending') {
                             document.getElementById('statusPagamento').textContent = 'Pagamento pendente...';
