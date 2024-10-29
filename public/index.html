@@ -105,12 +105,11 @@
 
     <div id="pix-container" style="display:none;">
         <p id="pixValor"></p>
-        <p id="pixChave"></p>
         <img id="qrCode" style="display:none;" alt="QR Code" />
+        <p id="pixChave"></p>
         <button id="copiar">Copiar Chave Pix</button>
-        <p id="statusPagamento"></p> <!-- Adicionei aqui o elemento para exibir o status -->
+        <p id="statusPagamento">Status de pagamento: Pendente</p>
     </div>
-    
 
     <script>
         const mp = new MercadoPago('APP_USR-3829660347869859-102309-9b6e68d21c73ba10440cce5d48bb60d1-430206286', {
@@ -119,74 +118,95 @@
     </script>
 
     <script>
-       document.getElementById('gerarPixBtn').addEventListener('click', (event) => {
-        event.preventDefault(); // Evita o envio do formulário
-        const alvaraId = parseInt(document.getElementById('alvaraSelect').value);
-        const email = document.getElementById('form-checkout__email').value;
-        const identificationType = document.getElementById('form-checkout__identificationType').value;
-        const identificationNumber = document.getElementById('form-checkout__identificationNumber').value;
+        document.getElementById('gerarPixBtn').addEventListener('click', (event) => {
+            event.preventDefault(); // Evita o envio do formulário
+            const alvaraId = parseInt(document.getElementById('alvaraSelect').value);
+            const email = document.getElementById('form-checkout__email').value;
+            const identificationType = document.getElementById('form-checkout__identificationType').value;
+            const identificationNumber = document.getElementById('form-checkout__identificationNumber').value;
 
-        fetch('/gerar-pix', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ alvaraId, email, identificationType, identificationNumber }),
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.error) {
-                console.error(data.error);
-                alert(`Erro: ${data.error}`);
-                return;
-            }
-            console.log('QR Code URL:', data.qrCode);
-            document.getElementById('pixValor').textContent = `Valor: R$${data.valor}`;
-            document.getElementById('pixChave').textContent = `Chave Pix: ${data.init_point}`;
-            document.getElementById('qrCode').src = `data:image/jpeg;base64,${data.qrCode}`;
-            document.getElementById('qrCode').style.display = 'block';
-            document.getElementById('pix-container').style.display = 'block';
-            document.getElementById('copiar').value = data.init_point;
-
-            // Verificar o status do pagamento após gerar a chave Pix
-          //  verificarStatusPagamento(data.paymentId);
-        })
-        .catch(error => {
-            console.error('Erro ao gerar chave Pix:', error);
-            alert('Erro ao gerar chave Pix. Tente novamente.');
-        });
-    });
-
-   
-
-        
-    
-
-    // Carregar alvarás
-    function carregarAlvaras() {
-        fetch('/alvaras')
+            fetch('/gerar-pix', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ alvaraId, email, identificationType, identificationNumber }),
+            })
             .then(res => res.json())
             .then(data => {
-                const alvaraSelect = document.getElementById('alvaraSelect');
-                data.forEach(alvara => {
-                    const option = document.createElement('option');
-                    option.value = alvara.id; // O value deve ser o ID do alvará
-                    option.textContent = alvara.nome;
-                    alvaraSelect.appendChild(option);
-                });
+                if (data.error) {
+                    console.error(data.error);
+                    alert(`Erro: ${data.error}`);
+                    return;
+                }
+                console.log('QR Code URL:', data.qrCode);
+                document.getElementById('pixValor').textContent = `Valor: R$${data.valor}`;
+                document.getElementById('qrCode').src = `data:image/jpeg;base64,${data.qrCode}`;
+                document.getElementById('qrCode').style.display = 'block';
+                document.getElementById('pixChave').textContent = `Chave Pix: ${data.init_point}`;
+                document.getElementById('pix-container').style.display = 'block';
+                document.getElementById('copiar').value = data.init_point;
+
+                // Verificar o status do pagamento após gerar a chave Pix
+                verificarStatusPagamento(data.paymentId);
+            })
+            .catch(error => {
+                console.error('Erro ao gerar chave Pix:', error);
+                alert('Erro ao gerar chave Pix. Tente novamente.');
             });
-    }
-
-    carregarAlvaras();
-
-    document.getElementById('copiar').addEventListener('click', () => {
-        const chavePix = document.getElementById('pixChave').textContent; // Obtém o texto da chave Pix
-        navigator.clipboard.writeText(chavePix).then(() => {
-            alert('Chave Pix copiada: ' + chavePix); // Alerta ao usuário
-        }).catch(err => {
-            console.error('Erro ao copiar: ', err);
         });
-    });
+
+        function verificarStatusPagamento(paymentId) {
+            const intervalId = setInterval(() => {
+                fetch(`/verificar-pagamento/${paymentId}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        console.log('Status do pagamento:', data.status);
+                        if (data.status === 'approved') {
+                            document.getElementById('statusPagamento').textContent = 'Pagamento aprovado!';
+                            document.getElementById('qrCode').style.display = 'none';
+                            document.getElementById('pixChave').style.display = 'none';
+                            clearInterval(intervalId); // Interrompe a verificação do status do pagamento
+                        } else if (data.status === 'pending') {
+                            document.getElementById('statusPagamento').textContent = 'Pagamento pendente...';
+                            console.log('Pagamento ainda pendente...');
+                        } else {
+                            document.getElementById('statusPagamento').textContent = 'Pagamento não aprovado.';
+                            clearInterval(intervalId); // Interrompe a verificação se o pagamento não for aprovado
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro ao verificar o pagamento:', error);
+                        clearInterval(intervalId); // Interrompe a verificação em caso de erro
+                    });
+            }, 5000); // Verifica o status do pagamento a cada 5 segundos
+        }
+
+        // Carregar alvarás
+        function carregarAlvaras() {
+            fetch('/alvaras')
+                .then(res => res.json())
+                .then(data => {
+                    const alvaraSelect = document.getElementById('alvaraSelect');
+                    data.forEach(alvara => {
+                        const option = document.createElement('option');
+                        option.value = alvara.id; // O value deve ser o ID do alvará
+                        option.textContent = alvara.nome;
+                        alvaraSelect.appendChild(option);
+                    });
+                });
+        }
+
+        carregarAlvaras();
+
+        document.getElementById('copiar').addEventListener('click', () => {
+            const chavePix = document.getElementById('pixChave').textContent; // Obtém o texto da chave Pix
+            navigator.clipboard.writeText(chavePix).then(() => {
+                alert('Chave Pix copiada: ' + chavePix); // Alerta ao usuário
+            }).catch(err => {
+                console.error(' Erro ao copiar: ', err);
+            });
+        });
     </script>
 </body>
 </html>
