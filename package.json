@@ -1,21 +1,27 @@
 {
-    "name": "sistema-bancario",
+    "name": "sistema-alvara-banco-do-brasil",
     "version": "1.0.0",
-    "description": "Um sistema bancário com geração de boletos, pagamentos via Pix e geração de PDFs de alvarás",
-    "main": "servidor.js",
-    "type": "module", 
-
+    "description": "Sistema de Alvará utilizando a API do Banco do Brasil para pagamentos via PIX.",
+    "main": "server.js",
+    "type": "module",
     "scripts": {
-        "start": "node servidor.js"
+        "start": "node server.js"
     },
     "dependencies": {
-        "@mercadopago/sdk-js": "^0.0.3",
-        "body-parser": "^1.20.3",
-        "express": "^4.21.1",
-        "helmet": "^8.0.0",
-        "html-pdf": "^3.0.1",
-        "mercadopago": "^2.0.15",
-        "qrcode": "^1.5.4"
+        "axios": "^0.27.2",
+        "canvas": "^2.11.2",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.5",
+        "express": "^4.18.2",
+        "multer": "^1.4.5-lts.1",
+        "pdf-lib": "^1.17.1",
+        "pdf-parse": "^1.1.1",
+        "qrcode": "^1.5.4",
+        "sharp": "^0.33.5",
+        "tesseract.js": "^5.1.1"
+    },
+    "engines": {
+        "node": ">=14.0.0"
     },
     "author": "Daniel de Queiroz Cavalcanti",
     "license": "MIT"
