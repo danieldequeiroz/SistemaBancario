@@ -1,79 +1,68 @@
+
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://sdk.mercadopago.com/js/v2"></script>
-    <title>Sistema de Alvará</title>
+    <title>Sistema de Alvará - Banco do Brasil</title>
     <style>
         body {
             background-color: black;
             color: white;
             text-align: center;
             margin: 0;
-            padding: 20px; 
-        }
-        #qrCode {
-            width: 150px; /* Ajuste o tamanho conforme necessário */
-            height: auto; /* Mantém a proporção da imagem */
-            display: block; /* Para que a margem funcione */
-            margin: 20px auto; /* Centraliza a imagem */
-        }
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
             padding: 20px;
-            gap: 10px;
-            margin-bottom: 20px;
         }
         .header img {
-            width: 100px;
+            width: 150px; /* Ajuste aqui para a logo */
+            height: auto; /* Mantém a proporção da imagem */
         }
-        .header h1 {
-            font-size: 24px;
-            margin: 0;
+        #qrCode {
+            width: 300px; /* Ajuste conforme necessário */
+            height: auto; /* Mantém a proporção */
+            display: block;
+            margin: 20px auto;
         }
         form {
-            margin-bottom: 20px; /* Espaço abaixo do formulário */
+            margin-bottom: 20px;
         }
-        /* Alinhamento à esquerda para rótulos e à direita para campos */
         form div {
-            display: flex; /* Usar flexbox */
-            justify-content: flex-start; /* Alinha à esquerda */
-            margin-bottom: 15px; /* Espaço abaixo de cada div do formulário */
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 15px;
         }
         form label {
-            flex: 1; /* Permite que o rótulo ocupe 1 parte do espaço */
-            text-align: left; /* Alinha o texto à esquerda */
-            margin-right: 10px; /* Espaço entre o rótulo e o campo */
+            flex: 1;
+            text-align: left;
+            margin-right: 10px;
         }
-        form input,
-        form select {
-            flex: 2; /* Permite que o campo ocupe 2 partes do espaço */
-            padding: 5px; /* Adiciona um pouco de preenchimento interno */
+        form input, form select {
+            flex: 2;
+            padding: 5px;
+        }
+        button {
+            background-color: #4CAF50; /* Verde */
+            color: white; /* Texto branco */
+            border: none; /* Sem borda */
+            padding: 10px 20px; /* Espaçamento interno */
+            text-align: center; /* Centraliza o texto */
+            text-decoration: none; /* Sem sublinhado */
+            display: inline-block; /* Permite definir largura e altura */
+            font-size: 16px; /* Tamanho da fonte */
+            margin: 4px 2px; /* Espaçamento entre botões */
+            cursor: pointer; /* Cursor de ponteiro ao passar o mouse */
         }
         #statusPagamento {
             margin-top: 20px;
             font-size: 18px;
-            color: yellow; /* Cor para destacar o status */
-        }
-        #contador {
-            font-size: 24px;
-            color: red; /* Cor para destacar o contador */
-            margin-top: 10px;
+            color: yellow;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <img src="logoJP.png" alt="Brasão de João Pessoa" />
-        <h1>Prefeitura de João Pessoa</h1>
-    </div>
-    <h1>Sistema de Alvará</h1>
     
-    <p id="statusPagamento" style="display:none;">Status de pagamento: Pendente</p> <!-- Status inicial -->
-    <p id="contador" style="display:none;">5:00</p> <!-- Contador inicial -->
+    <img src="logoJP.png" alt="Brasão de João Pessoa" style="width: 150px; height: auto;" />
+    <h1>Sistema de Alvará - Banco do Brasil</h1>
 
     <form id="form-checkout">
         <div>
@@ -84,14 +73,6 @@
             </select>
         </div>
         <div>
-            <label for="payerFirstName">Nome</label>
-            <input id="form-checkout__payerFirstName" name="payerFirstName" type="text" required placeholder="Insira seu nome">
-        </div>
-        <div>
-            <label for="payerLastName">Sobrenome</label>
-            <input id="form-checkout__payerLastName" name="payerLastName" type="text" required placeholder="Insira seu sobrenome">
-        </div>
-        <div>
             <label for="email">E-mail</label>
             <input id="form-checkout__email" name="email" type="email" required placeholder="Insira seu e-mail">
         </div>
@@ -99,9 +80,8 @@
             <label for="identificationType">Tipo de documento</label>
             <select id="form-checkout__identificationType" name="identificationType" required>
                 <option value="" disabled selected>Selecione um tipo de documento</option>
-                <option value="CPF">CPF</option >
+                <option value="CPF">CPF</option>
                 <option value="CNPJ">CNPJ</option>
-                <!-- Adicione outros tipos de documentos conforme necessário -->
             </select>
         </div>
         <div>
@@ -109,34 +89,58 @@
             <input id="form-checkout__identificationNumber" name="identificationNumber" type="text" required placeholder="Insira o número do documento">
         </div>
         <button id="gerarPixBtn">Gerar Chave Pix</button>
+        <button id="verificarPagamentoBtn">Verificar Pagamento</button>
+        <button id="comprovantesBtn">Comprovantes</button>
+        <div id="statusPagamento"></div>
     </form>
 
     <div id="pix-container" style="display:none;">
         <p id="pixValor"></p>
         <img id="qrCode" style="display:none;" alt="QR Code" />
         <p id="pixChave"></p>
-        <button id="copiar">Copiar Chave Pix</button>
+        <br>
+        <div id="comprovantePixContainer">
+            <label for="comprovantePix">Adicione o comprovante Pix:</label>
+ <input type="file" id="comprovantePix" accept="image/*,.pdf" />
+            <button id="uploadComprovanteBtn">Enviar Comprovante</button>
+        </div>
     </div>
 
     <script>
-        const mp = new MercadoPago('APP_USR-3829660347869859-102309-9b6e68d21c73ba10440cce5d48bb60d1-430206286', {
-            locale: 'pt-BR'
-        });
-    </script>
+        // Função para carregar os alvarás no select
+        function carregarAlvaras() {
+            fetch('/alvaras')
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error('Erro ao carregar alvarás');
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    const alvaraSelect = document.getElementById('alvaraSelect');
+                    data.forEach(alvara => {
+                        const option = document.createElement('option');
+                        option.value = alvara.id; 
+                        option.textContent = alvara.nome;
+                        alvaraSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar alvarás:', error);
+                    alert('Não foi possível carregar a lista de alvarás. Tente novamente mais tarde.');
+                });
+        }
 
-    <script>
-        let paymentId;
-        let timeoutId;
-        let contadorId;
-        let segundos = 300; // 5 minutos em segundos
+        // Chama a função para carregar os alvarás ao iniciar a página
+        carregarAlvaras();
 
         document.getElementById('gerarPixBtn').addEventListener('click', (event) => {
-            event.preventDefault(); // Evita o envio do formulário
+            event.preventDefault(); 
             const alvaraId = parseInt(document.getElementById('alvaraSelect').value);
             const email = document.getElementById('form-checkout__email').value;
             const identificationType = document.getElementById('form-checkout__identificationType').value;
             const identificationNumber = document.getElementById('form-checkout__identificationNumber').value;
-
+    
             fetch('/gerar-pix', {
                 method: 'POST',
                 headers: {
@@ -149,23 +153,13 @@
                 if (data.error) {
                     console.error(data.error);
                     alert(`Erro: ${data.error}`);
-                    return;
+                } else {
+                    document.getElementById('pixValor').textContent = `Valor: R$${data.valor}`;
+                    document.getElementById('qrCode').src = 'S.png';
+                    document.getElementById('qrCode').style.display = 'block';
+                    document.getElementById('pixChave').textContent = `Chave Pix: ${data.init_point}`;
                 }
-                console.log('QR Code URL:', data.qrCode);
-                document.getElementById('pixValor').textContent = `Valor: R$${data.valor}`;
-                document.getElementById('qrCode').src = `data:image/jpeg;base64,${data.qrCode}`;
-                document.getElementById('qrCode').style.display = 'block';
-                document.getElementById('pixChave').textContent = `Chave Pix: ${data.init_point}`;
                 document.getElementById('pix-container').style.display = 'block';
-                document.getElementById('copiar').value = data.init_point;
-
-                paymentId = data.paymentId;
-                timeoutId = setTimeout(cancelarPagamento, 300000); // Inicia o temporizador de 5 minutos
-                contadorId = setInterval(atualizarContador, 1000); // Inicia o contador de 5 minutos
-                document.getElementById('contador').style.display = 'block'; // Exibe o contador
-
-                // Verificar o status do pagamento após gerar a chave Pix
-                verificarStatusPagamento(paymentId);
             })
             .catch(error => {
                 console.error('Erro ao gerar chave Pix:', error);
@@ -173,105 +167,67 @@
             });
         });
 
-        function cancelarPagamento() {
-            fetch(`/cancelar-pagamento/${paymentId}`)
+        document.getElementById('verificarPagamentoBtn').addEventListener('click', () => {
+            const paymentId = prompt("Por favor, insira o ID do pagamento:");
+
+            if (paymentId) {
+                fetch('/verificar-pagamento', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ paymentId }),
+                })
                 .then(res => res.json())
                 .then(data => {
-                    console.log('Pagamento cancelado:', data);
-                    document.getElementById('statusPagamento').style.display = 'block';
-                    document.getElementById('statusPagamento').textContent = 'Status: Pagamento cancelado.';
-                    document.getElementById('form-checkout').style.display = 'none';
-                    document.getElementById('pixValor').style.display = 'none';
-                    document.getElementById('qrCode').style.display = 'none';
-                    document.getElementById('pixChave').style.display = 'none';
-                    document.getElementById('copiar').style.display = 'none';
-                    document.getElementById('contador').style.display = 'none'; // Oculta o contador
+                    if (data.error) {
+                        console.error(data.error);
+                        alert(`Erro: ${data.error}`);
+                    } else {
+                        document.getElementById('statusPagamento').textContent = `Status do Pagamento: ${data.status}`;
+                    }
                 })
                 .catch(error => {
-                    console.error('Erro ao cancelar pagamento:', error);
+                    console.error('Erro ao verificar pagamento:', error);
+                    alert('Erro ao verificar pagamento. Tente novamente.');
                 });
-        }
-
-        function verificarStatusPagamento(paymentId) {
-            const intervalId = setInterval(() => {
-                fetch(`/verificar-pagamento/${paymentId}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        console.log('Status do pagamento:', data.status);
-                        if (data.status === 'approved') {
-                            document.getElementById('statusPagamento').style.display = 'block';
-                            document.getElementById('statusPagamento').textContent = 'Status: Pagamento Aprovado!';
-                            document.getElementById('form-checkout').style.display = 'none';
-                            document.getElementById ('pixValor').style.display = 'none';
-                            document.getElementById('qrCode').style.display = 'none';
-                            document.getElementById('pixChave').style.display = 'none';
-                            document.getElementById('copiar').style.display = 'none';
-                            document.getElementById('pix-container').style.display = 'none'; // Oculta o container do Pix
-                            document.getElementById('contador').style.display = 'none'; // Oculta o contador
-                            clearInterval(intervalId); // Interrompe a verificação do status do pagamento
-                            clearTimeout(timeoutId); // Interrompe o temporizador de 5 minutos
-                            clearInterval(contadorId); // Interrompe o contador
-                        } else if (data.status === 'pending') {
-                            document.getElementById('statusPagamento').style.display = 'block';
-                            document.getElementById('statusPagamento').textContent = 'Status: Pagamento Pendente...';
-                            console.log('Pagamento ainda pendente...');
-                        } else {
-                            document.getElementById('statusPagamento').style.display = 'block';
-                            document.getElementById('statusPagamento').textContent = 'Status: Pagamento não aprovado.';
-                            clearInterval(intervalId); // Interrompe a verificação se o pagamento não for aprovado
-                            clearTimeout(timeoutId); // Interrompe o temporizador de 5 minutos
-                            clearInterval(contadorId); // Interrompe o contador
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Erro ao verificar o pagamento:', error);
-                        clearInterval(intervalId); // Interrompe a verificação em caso de erro
-                        clearTimeout(timeoutId); // Interrompe o temporizador de 5 minutos
-                        clearInterval(contadorId); // Interrompe o contador
-                    });
-            }, 5000); // Verifica o status do pagamento a cada 5 segundos
-        }
-
-        function atualizarContador() {
-            const contador = document.getElementById('contador');
-            let minutos = Math.floor(segundos / 60);
-            let segundosRestantes = segundos % 60;
-
-            contador.textContent = `${minutos.toString().padStart(2, '0')}:${segundosRestantes.toString().padStart(2, '0')}`;
-
-            segundos--;
-
-            if (segundos < 0) {
-                cancelarPagamento(); // Cancela o pagamento se o contador chegar a 0
-                clearInterval(contadorId); // Interrompe o contador
+            } else {
+                alert('ID do pagamento é obrigatório.');
             }
-        }
+        });
 
-        // Carregar alvarás
-        function carregarAlvaras() {
-            fetch('/alvaras')
+        document.getElementById('uploadComprovanteBtn').addEventListener('click', () => {
+            const fileInput = document.getElementById('comprovantePix');
+            const file = fileInput.files[0];
+
+            if (file) {
+                const formData = new FormData();
+                formData.append('comprovante', file);
+
+                fetch('/upload-comprovante', {
+                    method: 'POST',
+                    body: formData,
+                })
                 .then(res => res.json())
                 .then(data => {
-                    const alvaraSelect = document.getElementById('alvaraSelect');
-                    data.forEach(alvara => {
-                        const option = document.createElement('option');
-                        option.value = alvara.id; // O value deve ser o ID do alvará
-                        option.textContent = alvara.nome;
-                        alvaraSelect.appendChild(option);
-                    });
+                    if (data.error) {
+                        console.error(data.error);
+                        alert(`Erro: ${data.error}`);
+                    } else {
+                        alert('Comprovante enviado com sucesso!');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao enviar comprovante:', error);
+                    alert('Erro ao enviar comprovante. Tente novamente.');
                 });
-        }
+            } else {
+                alert('Por favor, selecione um arquivo para enviar.');
+            }
+        });
 
-        carregarAlvaras();
-
-        document.getElementById('copiar').addEventListener('click', () => {
-            const chavePix = document.getElementById('pixChave').textContent; // Obtém o texto da chave Pix
-            navigator.clipboard.writeText(chavePix).then(() => {
-                alert('Chave Pix copiada: ' + chavePix); // Alerta ao usuário
-            }).catch(err => {
-                console.error(' Erro ao copiar: ', err);
-            });
+        document.getElementById('comprovantesBtn').addEventListener('click', () => {
+                        window.location.href = 'indexcomprovante.html';
         });
     </script>
 </body>
-</html>
