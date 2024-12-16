@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+    
     <title>Comprovantes - Sistema de Alvará</title>
     <style>
         body {
@@ -11,6 +13,16 @@
             text-align: center;
             margin: 0;
             padding: 20px;
+        }
+        .header img {
+            width: 150px; /* Ajuste aqui para a logo */
+            height: auto; /* Mantém a proporção da imagem */
+        }
+        #qrCode {
+            width: 300px; /* Ajuste conforme necessário */
+            height: auto; /* Mantém a proporção */
+            display: block;
+            margin: 20px auto;
         }
         form {
             margin-bottom: 20px;
@@ -25,13 +37,32 @@
             text-align: left;
             margin-right: 10px;
         }
-        form input {
+        form input, form select {
             flex: 2;
             padding: 5px;
+        }
+        button {
+            background-color: #4CAF50; /* Verde */
+            color: white; /* Texto branco */
+            border: none; /* Sem borda */
+            padding: 10px 20px; /* Espaçamento interno */
+            text-align: center; /* Centraliza o texto */
+            text-decoration: none; /* Sem sublinhado */
+            display: inline-block; /* Permite definir largura e altura */
+            font-size: 16px; /* Tamanho da fonte */
+            margin: 4px 2px; /* Espaçamento entre botões */
+            cursor: pointer; /* Cursor de ponteiro ao passar o mouse */
+        }
+        #statusPagamento {
+            margin-top: 20px;
+            font-size: 18px;
+            color: yellow;
         }
     </style>
 </head>
 <body>
+    
+    <img src="logoJP.png" alt="Brasão de João Pessoa" style="width: 150px; height: auto;" />
     <h1>Enviar Comprovante Pix</h1>
 
     <form id="comprovanteForm">
@@ -61,6 +92,8 @@
                 const uploadButton = document.getElementById('uploadComprovanteBtn');
                 uploadButton.disabled = true; // Desabilita o botão enquanto a requisição está em andamento
 
+              
+
                 // Verifica se o arquivo é uma imagem ou um PDF
                 const isImage = file.type.startsWith('image/');
                 const endpoint = isImage ? '/upload-imagem' : '/upload-comprovante';
@@ -78,8 +111,13 @@
         alert(`Erro: ${data.error}`);
         document.getElementById('statusPagamento').textContent = 'Pendente'; // Atualiza o status para Pendente
     } else {
-        alert('Comprovante Identificado com sucesso!');
-        document.getElementById('statusPagamento').textContent = data.status || 'Concluído'; // Atualiza o status de pagamento
+        if (data.foundIds && data.foundIds.length > 0) {
+            alert('Comprovante Identificado com sucesso!');
+            document.getElementById('statusPagamento').textContent = 'Pago'; // Atualiza o status de pagamento
+        } else {
+            alert('Nenhum ID encontrado no comprovante.');
+            document.getElementById('statusPagamento').textContent = 'Pendente'; // Atualiza o status de pagamento
+        }
     }
 })
 .catch(error => {
