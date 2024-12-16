@@ -1,33 +1,37 @@
-import express from 'express';
-import path from 'path';
-import https from 'https';
-import fs from 'fs';
-import cors from 'cors';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import axios from 'axios';
-import dotenv from 'dotenv';
-import QRCode from 'qrcode';
-import multer from 'multer';
-import pdf from 'pdf-parse';
-import sharp from 'sharp';
-import { PDFDocument } from 'pdf-lib';
-import { createCanvas, loadImage } from 'canvas';
-import Tesseract from 'tesseract.js';
+import express from 'express'; // Framework web para criar APIs e gerenciar requisições.
+import path from 'path'; // Módulo para manipular caminhos de arquivos e diretórios.
+import https from 'https'; // Módulo para criar servidores HTTPS.
+import fs from 'fs'; // Módulo para manipulação de arquivos no sistema.
+import cors from 'cors'; // Middleware para habilitar CORS (Cross-Origin Resource Sharing).
+import { fileURLToPath } from 'url'; // Utilitário para converter URLs para caminhos de arquivos.
+import { dirname } from 'path'; // Método para obter o diretório atual de um arquivo.
+import axios from 'axios'; // Biblioteca para fazer requisições HTTP (GET, POST, etc.).
+import dotenv from 'dotenv'; // Módulo para carregar variáveis de ambiente de um arquivo `.env`.
+import QRCode from 'qrcode'; // Biblioteca para gerar QR Codes.
+import multer from 'multer'; // Middleware para upload de arquivos.
+import pdf from 'pdf-parse'; // Biblioteca para extrair conteúdo de arquivos PDF.
+import sharp from 'sharp'; // Biblioteca para manipulação de imagens (redimensionar, converter formatos, etc.).
+import { PDFDocument } from 'pdf-lib'; // Biblioteca para criar e manipular arquivos PDF.
+import { createCanvas, loadImage } from 'canvas'; // Módulos para desenhar gráficos em canvas e carregar imagens.
+import Tesseract from 'tesseract.js'; // Biblioteca para realizar OCR (reconhecimento óptico de caracteres).
 
-dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+dotenv.config(); // Carrega as variáveis de ambiente definidas no arquivo `.env`.
+
+// Obtém o caminho completo do arquivo atual (requerido no uso de módulos ES6).
+const __filename = fileURLToPath(import.meta.url); 
+const __dirname = dirname(__filename); // Obtém o diretório atual a partir do caminho do arquivo.
+
+// Instância do Express para criar o servidor e gerenciar rotas.
 const app = express();
 
-const keyPath = 'ssl.key/server.key';
-const certPath = 'ssl.crt/server.crt';
+const keyPath = 'ssl.key/server.key'; // Caminho para o arquivo da chave privada SSL.
+const certPath = 'ssl.crt/server.crt'; // Caminho para o arquivo do certificado SSL.
 
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const OAUTH2_ENDPOINT = 'https://oauth.sandbox.bb.com.br';
-const API_ENDPOINT = 'https://api.sandbox.bb.com.br';
+const CLIENT_ID = process.env.CLIENT_ID; // ID do cliente, carregado das variáveis de ambiente.
+const CLIENT_SECRET = process.env.CLIENT_SECRET; // Secret do cliente, carregado das variáveis de ambiente.
+const OAUTH2_ENDPOINT = 'https://oauth.sandbox.bb.com.br'; // Endpoint do OAuth2 para autenticação (sandbox do Banco do Brasil).
+const API_ENDPOINT = 'https://api.sandbox.bb.com.br'; // Endpoint da API principal do Banco do Brasil em ambiente sandbox.
 
 // Configuração do multer para upload de arquivos
 const storage = multer.diskStorage({
@@ -248,83 +252,79 @@ if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
         res.sendFile(path.join(__dirname, 'indexcomprovante.html')); 
     });
 
-    // Rota para upload do comprovante
-    app.post('/upload-comprovante', upload.single('comprovante'), (req, res) => {
-        console.log('Rota de upload chamada');
+   // Rota para upload do comprovante
+app.post('/upload-comprovante', upload.single('comprovante'), (req, res) => {
+    console.log('Rota de upload chamada');
 
-        if (!req.file) {
-            return res.status(400).json({ error: 'Nenhum arquivo enviado ou tipo de arquivo inválido.', status: 'Pendente' });
-        }
+    if (!req.file) {
+        return res.status(400).json({ error: 'Nenhum arquivo enviado ou tipo de arquivo inválido.', status: 'Pendente' });
+    }
 
-        const idsToCheck = [
-            ' E0000000020241031173126300692179',
-            'E00416968202411271407ccRdegdtC41',
-            '£60701190202411132009DY5D74ITCOZ',
-            '5C7E09416F77D919E9FE1959A39E1958EBE48632'
-        ];
+    console.log('Arquivo recebido:', req.file);
+    const filePath = req.file.path;
 
-        console.log('Arquivo recebido:', req.file);
-        const filePath = req.file.path;
+    if (path.extname(req.file.originalname).toLowerCase() === '.pdf') {
+        // Processar PDF
+        fs.readFile(filePath, (err, data) => {
+            if (err) {
+                return res.status(500).json({ error: 'Erro ao ler o arquivo.', status: 'Pendente' });
+            }
 
-        if (path.extname(req.file.originalname).toLowerCase() === '.pdf') {
-            fs.readFile(filePath, (err, data) => {
-                if (err) {
-                    return res.status(500).json({ error: 'Erro ao ler o arquivo.', status: 'Pendente' });
+            pdf(data).then((pdfData) => {
+                const content = pdfData.text;
+                console.log('Texto extraído do PDF:', content); // Log do texto extraído
+                const foundIds = content.match(/[A-Za-z0-9£]{32,40}/g); // Ajuste o padrão conforme necessário
+                if (foundIds && foundIds.length > 0) {
+                    res.json({ message: 'Comprovante enviado com sucesso! pagamento identificado.', foundIds, status: 'Pago' });
+                } else {
+                    res.json({ error: 'Nenhum ID encontrado no comprovante.', foundIds: [], status: 'Pendente' });
                 }
 
-                pdf(data).then((pdfData) => {
-                    const content = pdfData.text;
-                    const foundIds = idsToCheck.filter(id => content.includes(id));
-                    if (foundIds.length > 0) {
-                        res.json({ message: 'Comprovante enviado com sucesso! pagamento identificado.', foundIds, status: 'Pago' });
-                    } else {
-                        res.json({ error: 'Nenhum ID encontrado no comprovante.', foundIds, status: 'Pendente' });
-                    }
+                fs.unlink(filePath, (err) => {
+                    if (err) console.error('Erro ao deletar o arquivo:', err);
+                });
+            }).catch(err => {
+                console.error('Erro ao processar o PDF:', err);
+                res.status(500).json({ error: 'Erro ao processar o PDF.', foundIds: [], status: 'Pendente' });
+            });
+        });
+    } else {
+        // Processar imagem
+        console.log('Processando imagem...');
+        sharp(filePath)
+            .resize(1200, 1200)
+            .grayscale()
+            .normalize()
+            .toFile(`uploads/resized-${req.file.filename}`, (err, info) => {
+                if (err) {
+                    console.error('Erro ao processar a imagem:', err);
+                    return res.status(500).json({ error: 'Erro ao processar a imagem.', foundIds: [], status: 'Pendente' });
+                }
+                console.log('Imagem redimensionada com sucesso:', info);
 
-                    fs.unlink(filePath, (err) => {
-                        if (err) console.error('Erro ao deletar o arquivo:', err);
-                    });
+                Tesseract.recognize(
+                    `uploads/resized-${req.file.filename}`,
+                    'por',
+                    {
+                        logger: info => console.log(info)
+                    }
+                ).then(({ data: { text } }) => {
+                    console.log('Texto extraído da imagem:', text); // Log do texto extraído
+                    const foundIds = text.match(/[A-Za-z0-9£]{32,40}/g); // Ajuste o padrão conforme necessário
+                    if (foundIds && foundIds.length > 0) {
+                        res.json({ message: 'Comprovante enviado e IDs encontrados na imagem!', foundIds, status: 'Pago' });
+                    } else {
+                        res.json({ error: 'Nenhum ID encontrado na imagem.', foundIds: [], status: 'Pendente' });
+                    }
                 }).catch(err => {
-                    console.error('Erro ao processar o PDF:', err);
-                    res.status(500).json({ error: 'Erro ao processar o PDF.', foundIds: [], status: 'Pendente' });
+                    console.error('Erro ao processar a imagem:', err);
+                    res.status(500).json({ error: 'Erro ao processar a imagem.', foundIds: [], status: 'Pendente' });
                 });
             });
-        } else {
-            sharp(filePath)
-                .resize(800, 800)
-                .toFile(`uploads/resized-${req.file.filename}`, (err, info) => {
-                    if (err) {
-                        console.error('Erro ao processar a imagem:', err);
-                        return res.status(500).json({ error: 'Erro ao processar a imagem.', foundIds: [], status: 'Pendente' });
-                    }
-                    console.log('Imagem processada com sucesso:', info);
+    }
+});
 
-                    Tesseract.recognize(
-                        `uploads/resized-${req.file.filename}`,
-                        'por',
-                        {
-                            logger: info => console.log(info)
-                        }
-                    ).then(({ data: { text } }) => {
-                        const foundIds = idsToCheck.filter(id => text.includes(id));
-                        if (foundIds.length > 0) {
-                            res.json({ message: 'Comprovante enviado e IDs encontrados na imagem!', foundIds, status: 'Pago' });
-                        } else {
-                            res.json({ error: 'Nenhum ID encontrado na imagem.', foundIds, status: 'Pendente' });
-                        }
-
-                        fs.unlink(filePath, (err) => {
-                            if (err) console.error('Erro ao deletar o arquivo:', err);
-                        });
-                    }).catch(err => {
-                        console.error('Erro ao processar a imagem:', err);
-                        res.status(500).json({ error: 'Erro ao processar a imagem.', foundIds: [], status: 'Pendente' });
-                    });
-                });
-        }
-    });
-
-    const PORT = 3000;
+    const PORT = 3001;
 
     https.createServer(sslOptions, app).listen(PORT, () => {
         console.log(`Servidor rodando em https://localhost:${PORT}`);
@@ -384,7 +384,7 @@ app.post('/upload-imagem', upload.single('imagem'), (req, res) => {
     const filePath = req.file.path;
 
     sharp(filePath)
-        .resize(800, 800)
+        .resize(1200, 1200)
         .grayscale()
         .normalize()
         .toFile(`uploads/resized-${req.file.filename}`, (err, info) => {
