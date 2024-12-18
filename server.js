@@ -286,6 +286,8 @@ async function verificarPagamento(paymentId) {
    // Rota para upload do comprovante
 app.post('/upload-comprovante', upload.single('comprovante'), (req, res) => {
     console.log('Rota de upload chamada');
+    console.log('req.file:', req.file); // Log do arquivo recebido
+
 
     if (!req.file) {
         return res.status(400).json({ error: 'Nenhum arquivo enviado ou tipo de arquivo inválido.', status: 'Pendente' });
