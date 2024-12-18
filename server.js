@@ -188,33 +188,64 @@ if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
         }
     });
 
-    // Rota para verificar o status do pagamento
-    app.post('/verificar-pagamento', async (req, res) => {
-        const { paymentId } = req.body;
+// Rota para verificar o status do pagamento
+app.post('/verificar-pagamento', async (req, res) => {
+    const { paymentId } = req.body;
 
-        if (!paymentId) {
-            return res.status(400).json({ error: 'O ID do pagamento é obrigatório' });
-        }
+    if (!paymentId) {
+        return res.status(400).json({ error: 'O ID do pagamento é obrigatório' });
+    }
 
-        try {
-            const paymentStatus = await verificarPagamento(paymentId);
-            res.json(paymentStatus);
-        } catch (error) {
-            console.error('Erro ao verificar pagamento:', error);
-            res.status(500).json({ error: 'Erro ao verificar pagamento' });
-        }
-    });
+    // Verifica se o paymentId corresponde ao padrão desejado
+    const foundIds = paymentId.match(/[A-Za-z0-9£]{32,40}/g);
+    if (!foundIds || foundIds.length === 0) {
+        return res.status(400).json({ error: 'O ID do pagamento deve ter entre 32 e 40 caracteres alfanuméricos.' });
+    }
 
-    // Função para verificar o status do pagamento
-    async function verificarPagamento(paymentId) {
-        if (paymentId === 'E0000000020241031173126300692179') {
+    try {
+        const paymentStatus = await verificarPagamento(paymentId);
+        res.json(paymentStatus);
+    } catch (error) {
+        console.error('Erro ao verificar pagamento:', error);
+        res.status(500).json({ error: 'Erro ao verificar pagamento' });
+    }
+});
+
+// Função para verificar o status do pagamento
+async function verificarPagamento(paymentId) {
+    // Verifica se o paymentId corresponde ao formato desejado
+    const isValidId = paymentId.match(/[A-Za-z0-9£]{32,40}/);
+    
+    if (isValidId) {
+        // Aqui você pode simular um pagamento bem-sucedido ou não
+        // Para fins de exemplo, vamos considerar que IDs que começam com 'E' são pagos
+        if (paymentId.startsWith('E')) {
             return {
                 id: paymentId,
                 status: 'Pago',
-                valor: 0.01,
+                valor: 0.01, // Valor de exemplo
+                data: new Date().toISOString(),
+            };
+        } else {
+            return {
+                id: paymentId,
+                status: 'Não encontrado',
+                valor: 0,
                 data: new Date().toISOString(),
             };
         }
+    }
+
+    // Se o ID não for válido, retorna um status de "Não encontrado"
+    return {
+        id: paymentId,
+        status: 'Não encontrado',
+        valor: 0,
+        data: new Date().toISOString(),
+    };
+
+
+
 
         const accessToken = await obterAccessToken();
 
@@ -371,8 +402,11 @@ async function gerarPixBancoDoBrasil(pixData) {
 }
 
 // Rota para upload de imagem
-app.post('/upload-imagem', upload.single('imagem'), (req, res) => {
+app.post('/upload-imagem', upload.single('comprovante'), (req, res) => {
     console.log('Rota de upload de imagem chamada');
+
+    console.log('req.file:', req.file); // Log do arquivo recebido
+
 
     if (!req.file) {
         return res.status(400).json({ error: 'Nenhuma imagem enviada ou tipo de arquivo inválido.', status: 'Pendente' });
@@ -384,7 +418,7 @@ app.post('/upload-imagem', upload.single('imagem'), (req, res) => {
     const filePath = req.file.path;
 
     sharp(filePath)
-        .resize(1200, 1200)
+        .resize(800, 800)
         .grayscale()
         .normalize()
         .toFile(`uploads/resized-${req.file.filename}`, (err, info) => {
@@ -406,11 +440,11 @@ app.post('/upload-imagem', upload.single('imagem'), (req, res) => {
                 if (foundIds.length > 0) {
                     res.json({ message: 'Comprovante enviado e IDs encontrados na imagem!', foundIds, status: 'Pago' });
                 } else {
-                    res.json({ error: 'Nenhum ID encontrado na imagem.', foundIds, status: 'Pendente' });
+                    res.json({ error: 'Nenhum ID encontrado na imagem.', foundIds: [], status: 'Pendente' });
                 }
             }).catch(err => {
                 console.error('Erro ao processar a imagem:', err);
                 res.status(500).json({ error: 'Erro ao processar a imagem.', foundIds: [], status: 'Pendente' });
-            });
-        });
+            }); // Aqui está o fechamento correto
+        }); // Fechamento da função toFile
 });
