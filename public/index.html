@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -12,6 +11,7 @@
             text-align: center;
             margin: 0;
             padding: 20px;
+            font-family: Arial, sans-serif;
         }
         .header img {
             width: 150px; /* Ajuste aqui para a logo */
@@ -25,37 +25,87 @@
         }
         form {
             margin-bottom: 20px;
+            display: flex;
+            flex-direction: column; /* Coloca os elementos em coluna */
+            align-items: center; /* Centraliza os itens */
         }
         form div {
-            display: flex;
-            justify-content: flex-start;
+            width: 100%; /* Faz os divs ocuparem toda a largura */
             margin-bottom: 15px;
+            display: flex;
+            flex-direction: column; /* Coloca label e input em coluna */
+            align-items: flex-start; /* Alinha à esquerda */
         }
         form label {
-            flex: 1;
-            text-align: left;
-            margin-right: 10px;
+            margin-bottom: 5px; /* Espaço entre o label e o input */
         }
         form input, form select {
-            flex: 2;
-            padding: 5px;
+            width: 100%; /* Faz os inputs ocuparem toda a largura */
+            padding: 10px; /* Aumenta o padding */
+            font-size: 16px; /* Aumenta o tamanho da fonte */
         }
         button {
             background-color: #4CAF50; /* Verde */
             color: white; /* Texto branco */
             border: none; /* Sem borda */
-            padding: 10px 20px; /* Espaçamento interno */
+            padding: 10px; /* Aumenta o padding */
             text-align: center; /* Centraliza o texto */
             text-decoration: none; /* Sem sublinhado */
-            display: inline-block; /* Permite definir largura e altura */
             font-size: 16px; /* Tamanho da fonte */
-            margin: 4px 2px; /* Espaçamento entre botões */
+            margin: 10px; /* Espaçamento entre botões */
             cursor: pointer; /* Cursor de ponteiro ao passar o mouse */
+            border-radius: 5px; /* Arredonda os cantos dos botões */
+            width: 100%; /* Faz os botões ocuparem toda a largura */
+            max-width: 300px; /* Limita a largura máxima dos botões */
+        }
+        button:hover {
+            background-color: #66BB6A; /* Verde claro ao passar o mouse */
+        }
+        button:active {
+            background-color: #388E3C; /* Verde escuro ao clicar */
         }
         #statusPagamento {
             margin-top: 20px;
             font-size: 18px;
             color: yellow;
+        }
+        input {
+            font-family: Arial, sans-serif;
+            text-size-adjust: 100%;
+            box-sizing: border-box;
+            border: 2px solid #ccc;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #fff;
+            color: #000;
+        }
+        /* Estilo para o container dos botões */
+        #buttonContainer {
+            display: flex;
+            flex-direction: row; /* Padrão: horizontal em telas grandes */
+            justify-content: center;
+            gap: 10px; /* Espaçamento entre os botões */
+            flex-wrap: wrap; /* Permite quebra de linha em telas menores */
+            margin-top: 15px; /* Espaço acima do contêiner de botões */
+        }
+
+        /* Estilos para telas grandes (largura maior que 1024px) */
+        @media (min-width: 1025px) {
+            #buttonContainer {
+                flex-direction: row; /* Botões dispostos horizontalmente */
+            }
+        }
+
+        /* Estilos para telas pequenas (largura menor ou igual a 1024px) */
+        @media (max-width: 1024px) {
+            #buttonContainer {
+                flex-direction: column; /* Altera para vertical em telas pequenas */
+            }
+            button {
+                width: 100%; /* Botões ocupam toda a largura em telas pequenas */
+                margin: 10px 0; /* Margem vertical entre os botões */
+            } 
+        
         }
     </style>
 </head>
