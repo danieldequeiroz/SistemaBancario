@@ -4,9 +4,13 @@
     "description": "Sistema de Alvará utilizando a API do Banco do Brasil para pagamentos via PIX.",
     "main": "server.js",
     "type": "module",
-    "scripts": {
-        "start": "node server.js"
-    },
+   "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "build": "npm run clean && npm install",
+    "clean": "rm -rf node_modules package-lock.json"
+}
+,
     "dependencies": {
         "axios": "^0.27.2",
         "canvas": "^2.11.2",
@@ -21,9 +25,10 @@
         "sharp": "^0.33.5",
         "tesseract.js": "^5.1.1"
     },
-    "engines": {
-        "node": ">=14.0.0"
-    },
+   "engines": {
+    "node": ">=18.0.0"
+}
+,
     "author": "Daniel de Queiroz Cavalcanti",
     "license": "MIT"
 }
