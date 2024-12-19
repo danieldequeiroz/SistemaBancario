@@ -420,7 +420,7 @@ app.post('/upload-imagem', upload.single('comprovante'), (req, res) => {
     const filePath = req.file.path;
 
     sharp(filePath)
-        .resize(800, 800)
+        .resize(1200, 1200)
         .grayscale()
         .normalize()
         .toFile(`uploads/resized-${req.file.filename}`, (err, info) => {
