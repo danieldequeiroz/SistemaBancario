@@ -117,6 +117,123 @@ Passo 6: Verificação Final:
 
 Caso todas as etapas estejam funcionando corretamente, você poderá visualizar o PDF do alvará gerado e fazer o download.
 
+## ENGLISH
+
+# # Payment Permit System with Payment Generation via PIX
+
+This project is a payment permit management system that allows uploading payment receipts and generating payments via PIX. The system uses Tesseract.js to extract text from images and PDFs, in addition to other libraries for file manipulation and communication with APIs.
+
+## Features
+
+- **Receipt Upload**: Allows uploading PDF files and images (JPG, PNG) as payment receipts.
+- **Text Extraction**: Uses Tesseract.js to extract text from images and PDFs.
+- **Payment Generation via PIX**: Integration with Banco do Brasil's API to generate payments via PIX.
+- **Payment Verification**: Verifies whether payments were identified based on the IDs provided.
+
+## Technologies Used
+
+- **Node.js**: Execution environment for the server.
+- **Express**: Framework for building APIs.
+- **Multer**: Middleware for handling file uploads.
+- **Sharp**: Library for image processing.
+- **Tesseract.js**: Library for optical character recognition (OCR).
+- **PDF-Parse**: Library for extracting text from PDF files.
+- **Axios**: HTTP client for making requests to external APIs.
+- **dotenv**: For managing environment variables.
+
+## Prerequisites
+
+- Node.js (v14 or higher)
+- SSL certificates (for running on HTTPS)
+- Banco do Brasil account to access the PIX payment API
+
+## Installation
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/seu-usuario/seu-repositorio.git
+cd seu-repositorio
+
+2. Install the dependencies:
+
+```bash
+npm install
+
+3. Create a .env file in the project root and add your credentials:
+
+```bash
+CLIENT_ID=seu_client_id
+CLIENT_SECRET=seu_client_secret
+
+4. Since it is running on HTTPS (DUE TO THE CENTRAL BANK RULES, ALL BANK APIS) YOU NEED TO GENERATE A PERSONAL HTTPS CERTIFICATE ON YOUR COMPUTER. Also, make sure that the uploads/ and ssl.key/ directories exist and that the SSL certificates are in the correct directory.
+
+## EXECUTION
+
+1- it is running inside the Docker container: docker run -d -p 3000:3000 --name sistemabancario bancodobrasil
+
+2- docker ps
+
+Step 5: after cloning the repository, install npm install express body-parser html-pdf
+
+Step 6: If you don't have Postman, install it: You can download it at https://www.postman.com/downloads/.
+
+Step 7: Open Postman and create a new request.
+Set the request method to POST.
+In the URL field, enter http://localhost:4000/gerar-boleto.
+
+Go to the "Body" tab, select raw and then JSON.
+In the request body, insert the following JSON (adjusting the alvaraId according to what is available in your system):
+{
+"alvaraId": 1
+}
+or
+{
+"alvaraId": 2
+}
+Click Send to send the request and check the response.
+Expected response: {
+"message": "Boleto generated successfully",
+"boleto": {
+"value": 100,
+"codigoBarras": "1234.56789.12345-1",
+"due date": "10/10/2024"
+}
+}
+Step 8: Simulate Payment via Pix: Now that you have the boleto barcode, you can simulate payment via Pix. To do so, send a POST request to the /pagar-pix endpoint with the generated barcode.
+
+In Postman, set up a new request:
+Method: POST
+URL: http://localhost:4000/pagar-pix
+Request body (JSON):
+
+{
+"codigoBarras": "1234.56789.12345-1"
+}
+
+If the payment is successful, you should receive a message confirming the payment.
+
+Step 9: Generate the PDF of the Alvará: After the payment is confirmed, you can generate the PDF of the requested alvará. To do this, send a POST request to the /gerar-pdf endpoint, passing the ID of the alvará that you selected previously.
+
+In Postman, set up another request: Method: POST URL: http://localhost:4000/generate-pdf
+Request body (JSON):
+
+{
+"alvaraId": 1
+}
+
+or
+
+{
+"alvaraId": 2
+}
+
+This will generate the PDF of the license, and the PDF will be returned as a response, allowing you to download the document.
+
+Step 6: Final Verification:
+
+If all steps are working correctly, you will be able to view the generated PDF of the license and download it.
+
 
 
 
